@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CVScreener.API/CVScreener.API.csproj" />
+    <Project Path="src/CVScreener.Core/CVScreener.Core.csproj" />
+    <Project Path="src/CVScreener.Infrastructure/CVScreener.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CVScreener.Tests/CVScreener.Tests.csproj" />
+  </Folder>
+</Solution>
