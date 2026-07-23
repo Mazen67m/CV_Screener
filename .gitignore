@@ -1,0 +1,117 @@
+
+# ── Next.js ───────────────────────────────────────────────
+frontend/.next/
+frontend/out/
+frontend/node_modules/
+frontend/.env.local
+frontend/.env*.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.pnpm-debug.log*
+frontend/tsconfig.tsbuildinfo
+
+# ── .NET ──────────────────────────────────────────────────
+backend/src/**/bin/
+backend/src/**/obj/
+backend/tests/**/bin/
+backend/tests/**/obj/
+
+# Secret env files — never commit these
+backend/**/.env
+backend/**/.env.*
+
+# Visual Studio
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+.vscode/
+*.ncrunch*
+
+# Publish output
+backend/**/publish/
+backend/**/*.PublishSettings
+
+# NuGet
+backend/**/*.nupkg
+backend/**/packages/
+!backend/**/.nuget/packages/.gitignore
+backend/**/project.lock.json
+backend/**/project.fragment.lock.json
+backend/**/artifacts/
+
+# Rider
+.idea/
+*.DotSettings.user
+
+# ── Python / ML ───────────────────────────────────────────
+ml/__pycache__/
+ml/**/__pycache__/
+ml/.venv/
+ml/venv/
+ml/env/
+ml/*.egg-info/
+ml/dist/
+ml/build/
+ml/.eggs/
+ml/models/*.onnx
+ml/models/*.pkl
+ml/models/*.joblib
+ml/*.pyc
+ml/**/*.pyc
+*.pyo
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# ── Docker ────────────────────────────────────────────────
+*.dockerignore
+docker-compose.override.yml
+
+# ── Environment & Secrets ─────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+
+# ── OS ────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# ── Logs & Temp ───────────────────────────────────────────
+*.log
+logs/
+tmp/
+temp/
+
+# ── Documentation (internal planning docs) ────────────────
+# Ignore all .md files except README.md
+*.md
+!README.md
+*.txt
+# ── Database Scripts ──────────────────────────────────────
+*.sql
+
+# ── Binary & Media Assets ─────────────────────────────────
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.svg
+*.ico
+*.mp4
+*.mp3
+
+# ── Internal Folders ──────────────────────────────────────
+Linkedin Posts & Docs/
