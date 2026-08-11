@@ -64,6 +64,7 @@ ml/models/*.pkl
 ml/models/*.joblib
 ml/*.pyc
 ml/**/*.pyc
+ml/tmp_check/
 *.pyo
 
 # Jupyter Notebooks
@@ -93,14 +94,6 @@ logs/
 tmp/
 temp/
 
-# ── Documentation (internal planning docs) ────────────────
-# Ignore all .md files except README.md
-*.md
-!README.md
-*.txt
-# ── Database Scripts ──────────────────────────────────────
-*.sql
-
 # ── Binary & Media Assets ─────────────────────────────────
 *.pdf
 *.png
@@ -113,5 +106,12 @@ temp/
 *.mp4
 *.mp3
 
-# ── Internal Folders ──────────────────────────────────────
+# ── Internal / Agent Folders ──────────────────────────────
 Linkedin Posts & Docs/
+.ai/
+
+# ── Generated ML Artifacts (large runtime outputs) ────────
+ml/models/vocabulary.json
+ml/models/idf_weights.json
+ml/corpus.json
+ml/data/
