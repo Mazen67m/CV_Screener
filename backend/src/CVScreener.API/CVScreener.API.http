@@ -1,6 +1,189 @@
 @CVScreener.API_HostAddress = http://localhost:5263
 
-GET {{CVScreener.API_HostAddress}}/weatherforecast/
+### ── Health check ─────────────────────────────────────────────────────────────
+GET {{CVScreener.API_HostAddress}}/api/health
 Accept: application/json
 
 ###
+
+### ── M5 Smoke test: Similar texts (expect textSimilarity > 0.4) ───────────────
+POST {{CVScreener.API_HostAddress}}/api/ml-test
+Content-Type: application/json
+
+{
+  "cvText": "Python developer with Django REST API PostgreSQL Docker experience five years",
+  "jdText": "Python engineer Flask backend API PostgreSQL cloud deployment AWS experience"
+}
+
+###
+
+### ── M5 Smoke test: Unrelated texts (expect textSimilarity < 0.1) ─────────────
+POST {{CVScreener.API_HostAddress}}/api/ml-test
+Content-Type: application/json
+
+{
+  "cvText": "chef cook restaurant kitchen pastry grilling food preparation culinary arts",
+  "jdText": "Python engineer Flask backend API PostgreSQL cloud deployment AWS experience"
+}
+
+###
+
+### ── M5 Smoke test: Identical texts (expect textSimilarity ≈ 1.0) ──────────────
+POST {{CVScreener.API_HostAddress}}/api/ml-test
+Content-Type: application/json
+
+{
+  "cvText": "software engineer python java spring cloud aws kubernetes experience",
+  "jdText": "software engineer python java spring cloud aws kubernetes experience"
+}
+
+###
+
+# ─── Phase 3: Analysis API Endpoint ───────────────────────────────────────────
+# Routes (AnalysisController):
+#   POST /api/analysis/analyze      → run analysis, returns 201 Created + AnalyzeCreatedResponse
+#   GET  /api/analysis/history      → history list, returns HistoryItemResponse[]
+#   GET  /api/analysis/{id}         → full detail by ID, returns AnalyzeResponse
+#
+# Replace PASTE_YOUR_CLERK_JWT_HERE with a real Clerk JWT.
+# Get one: browser DevTools → Application → Cookies → __clerk_db_jwt
+#          OR call Clerk's getToken() in the frontend and paste from console.
+@ClerkJwt = PASTE_YOUR_CLERK_JWT_HERE
+# After running the first analysis, paste the returned 'id' GUID here:
+@AnalysisId = PASTE_ANALYSIS_ID_HERE
+
+### ── Phase 3 Smoke test 1: Fresh analysis with cvText ────────────────────────
+# Expected: 201 Created, Location header, isFromCache: false
+POST {{CVScreener.API_HostAddress}}/api/analysis/analyze
+Authorization: Bearer {{ClerkJwt}}
+Content-Type: application/json
+
+{
+  "cvText": "Senior Python developer with 5 years of experience. Skilled in Django, REST API design, PostgreSQL, Docker, and AWS. Deployed multiple microservices on Kubernetes. Strong knowledge of CI/CD pipelines using GitHub Actions.",
+  "jdText": "We are looking for a Python engineer with 3+ years of experience in Django, REST APIs, and cloud deployment (AWS or Azure). Kubernetes knowledge is a plus. PostgreSQL and Docker experience required.",
+  "jobTitle": "Senior Python Engineer"
+}
+
+###
+
+### ── Phase 3 Smoke test 2: Cache hit with same cvText ────────────────────────
+# Send the IDENTICAL cv/jd text again. MD5 dedup hash matches → instant cache return.
+# Expected: 201 Created, isFromCache: true, same id and score as Smoke test 1.
+POST {{CVScreener.API_HostAddress}}/api/analysis/analyze
+Authorization: Bearer {{ClerkJwt}}
+Content-Type: application/json
+
+{
+  "cvText": "Senior Python developer with 5 years of experience. Skilled in Django, REST API design, PostgreSQL, Docker, and AWS. Deployed multiple microservices on Kubernetes. Strong knowledge of CI/CD pipelines using GitHub Actions.",
+  "jdText": "We are looking for a Python engineer with 3+ years of experience in Django, REST APIs, and cloud deployment (AWS or Azure). Kubernetes knowledge is a plus. PostgreSQL and Docker experience required.",
+  "jobTitle": "Senior Python Engineer"
+}
+
+###
+
+### ── Phase 3 Smoke test 3: Fresh analysis with cvBase64 PDF ──────────────────
+# Expected: 201 Created, Location header, PDF text extracted before matching.
+POST {{CVScreener.API_HostAddress}}/api/analysis/analyze
+Authorization: Bearer {{ClerkJwt}}
+Content-Type: application/json
+
+{
+  "cvBase64": "JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA2MTIgNzkyXSAvQ29udGVudHMgNCAwIFIgL1Jlc291cmNlcyA8PCAvRm9udCA8PCAvRjEgNSAwIFIgPj4gPj4gPj4KZW5kb2JqCjQgMCBvYmoKPDwgL0xlbmd0aCAxNzAgPj4Kc3RyZWFtCkJUCi9GMSAxMiBUZgo3MiA3MjAgVGQKKFNlbmlvciBQeXRob24gZGV2ZWxvcGVyIHdpdGggNSB5ZWFycyBleHBlcmllbmNlIGluIERqYW5nbyBSRVNUIEFQSSBQb3N0Z3JlU1FMIERvY2tlciBBV1MgS3ViZXJuZXRlcyBDSUNEIGFuZCBtaWNyb3NlcnZpY2VzLikgVGoKRVQKZW5kc3RyZWFtCmVuZG9iago1IDAgb2JqCjw8IC9UeXBlIC9Gb250IC9TdWJ0eXBlIC9UeXBlMSAvQmFzZUZvbnQgL0hlbHZldGljYSA+PgplbmRvYmoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDA5IDAwMDAwIG4gCjAwMDAwMDAwNTggMDAwMDAgbiAKMDAwMDAwMDExNSAwMDAwMCBuIAowMDAwMDAwMjY2IDAwMDAwIG4gCjAwMDAwMDA0ODYgMDAwMDAgbiAKdHJhaWxlcgo8PCAvU2l6ZSA2IC9Sb290IDEgMCBSID4+CnN0YXJ0eHJlZgo1NTYKJSVFT0YK",
+  "jdText": "We are looking for a Python engineer with 3+ years of experience in Django, REST APIs, PostgreSQL, Docker, AWS, Kubernetes, CI/CD, and microservices.",
+  "jobTitle": "Senior Python Engineer"
+}
+
+###
+
+### ── Phase 3 Smoke test 4: Validation — both CV fields provided ──────────────
+# Expected: 400 Bad Request, provide either cvText or cvBase64, not both.
+POST {{CVScreener.API_HostAddress}}/api/analysis/analyze
+Authorization: Bearer {{ClerkJwt}}
+Content-Type: application/json
+
+{
+  "cvText": "Senior Python developer with 5 years of experience in Django, REST APIs, PostgreSQL, Docker, AWS, Kubernetes, CI/CD, and microservices.",
+  "cvBase64": "JVBERi0xLjQKJUVPRgo=",
+  "jdText": "We are looking for a Python engineer with 3+ years of experience in Django, REST APIs, and cloud deployment."
+}
+
+###
+
+### ── Phase 3 Smoke test 5: Validation — neither CV field provided ────────────
+# Expected: 400 Bad Request, either cvText or cvBase64 must be provided.
+POST {{CVScreener.API_HostAddress}}/api/analysis/analyze
+Authorization: Bearer {{ClerkJwt}}
+Content-Type: application/json
+
+{
+  "jdText": "We are looking for a Python engineer with 3+ years of experience in Django, REST APIs, and cloud deployment."
+}
+
+###
+
+### ── Phase 3 Smoke test 6: Validation — invalid base64 ───────────────────────
+# Expected: 400 Bad Request, invalid base64 encoding in cvBase64 field.
+POST {{CVScreener.API_HostAddress}}/api/analysis/analyze
+Authorization: Bearer {{ClerkJwt}}
+Content-Type: application/json
+
+{
+  "cvBase64": "not-valid-base64",
+  "jdText": "We are looking for a Python engineer with 3+ years of experience in Django, REST APIs, and cloud deployment."
+}
+
+###
+
+### ── Phase 3 Smoke test 7: Low-match (expect overallScore < 30) ──────────────
+# Chef CV vs. Python JD. Skills: 0 overlap. Text similarity: ~0. Experience: neutral.
+POST {{CVScreener.API_HostAddress}}/api/analysis/analyze
+Authorization: Bearer {{ClerkJwt}}
+Content-Type: application/json
+
+{
+  "cvText": "Head chef with 10 years of culinary experience. Expert in French cuisine, pastry, grilling, and kitchen management. Led a team of 15 cooks in a fine dining restaurant.",
+  "jdText": "Senior Python developer with 5+ years of experience in Django, FastAPI, PostgreSQL, Docker, and AWS cloud infrastructure."
+}
+
+###
+
+### ── Phase 3 Smoke test 8: Validation — CV text too short ────────────────────
+# Expected: 400 Bad Request
+POST {{CVScreener.API_HostAddress}}/api/analysis/analyze
+Authorization: Bearer {{ClerkJwt}}
+Content-Type: application/json
+
+{
+  "cvText": "short",
+  "jdText": "We are looking for a Python engineer with 3+ years of experience in Django, REST APIs, and cloud deployment."
+}
+
+###
+
+### ── Phase 3 Smoke test 9: GET /api/analysis/history ─────────────────────────
+# Returns up to the last 50 analyses for the authenticated user.
+# Paste the ClerkJwt above, then send.
+GET {{CVScreener.API_HostAddress}}/api/analysis/history
+Authorization: Bearer {{ClerkJwt}}
+Accept: application/json
+
+###
+
+### ── Phase 3 Smoke test 10: GET /api/analysis/history?limit=5 ────────────────
+# Expected: 200 OK, array length <= 5.
+GET {{CVScreener.API_HostAddress}}/api/analysis/history?limit=5
+Authorization: Bearer {{ClerkJwt}}
+Accept: application/json
+
+###
+
+### ── Phase 3 Smoke test 11: GET /api/analysis/{id} — full detail ─────────────
+# Paste the analysis GUID from Smoke test 1 into @AnalysisId at the top of this file.
+# Expect: full AnalyzeResponse including cvText, jdText, skills breakdown, experience breakdown.
+GET {{CVScreener.API_HostAddress}}/api/analysis/{{AnalysisId}}
+Authorization: Bearer {{ClerkJwt}}
+Accept: application/json
+
+###
+
+

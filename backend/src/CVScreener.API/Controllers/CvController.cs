@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 
 namespace CVScreener.API.Controllers;
 
+/// <summary>Handles CV file upload and text extraction.</summary>
 [ApiController]
 [Route("api/cv")]
 [Authorize]
@@ -27,12 +28,24 @@ public class CvController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// POST /api/cv/extract
-    /// Uploads a PDF CV, extracts and cleans its text, and returns metadata.
-    /// </summary>
+    /// <summary>Uploads a PDF CV, extracts and cleans its text, and returns metadata.</summary>
+    /// <remarks>
+    /// Accepts multipart/form-data with a single PDF file (max 5 MB).
+    /// Scanned, encrypted, or corrupted PDFs are rejected with 422.
+    /// </remarks>
+    /// <param name="request">Multipart form containing the PDF file.</param>
+    /// <response code="200">Text extracted successfully.</response>
+    /// <response code="400">No file provided, wrong type, or file too large.</response>
+    /// <response code="401">Missing or invalid Clerk JWT.</response>
+    /// <response code="422">Could not extract text (scanned, encrypted, corrupted, or too short).</response>
+    /// <response code="500">Unexpected server error.</response>
     [HttpPost("extract")]
     [RequestSizeLimit(AppLimits.MaxFileSizeBytes)]
+    [ProducesResponseType(typeof(CvExtractResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ExtractCv([FromForm] CvExtractRequest request)
     {
         // 1. Presence check — explicit message, not a type error
