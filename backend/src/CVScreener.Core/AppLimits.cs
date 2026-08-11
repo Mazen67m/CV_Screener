@@ -21,4 +21,9 @@ public static class AppLimits
 
     /// <summary>Maximum word count for a JD (post-cleaning).</summary>
     public const int JdMaxWordCount = 5000;
+
+    // ─── Analysis History ───────────────────────────────────────────────────
+
+    /// <summary>Maximum number of history items returned by GET /api/analysis/history.</summary>
+    public const int HistoryLimit = 50;
 }
