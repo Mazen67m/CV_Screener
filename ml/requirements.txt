@@ -1,0 +1,12 @@
+# ML training dependencies — Python 3.13 + onnx 1.22.0 compatible
+#
+# Version notes:
+#   skl2onnx 1.20.0  — first version compatible with onnx 1.22.0
+#   onnx 1.22.0      — latest; pre-built wheels available for Python 3.13
+#   skl2onnx 1.17/1.18 were incompatible with onnx 1.17+ (missing split_complex_to_pairs)
+scikit-learn==1.7.2
+skl2onnx==1.20.0        # converts fitted TfidfVectorizer → tfidf.onnx
+onnx==1.22.0            # ONNX model format; 1.22.0 is latest with Python 3.13 wheels
+onnxruntime==1.20.1     # local verification of tfidf.onnx (C# uses Microsoft.ML.OnnxRuntime)
+numpy==2.2.3
+pandas==2.2.2
