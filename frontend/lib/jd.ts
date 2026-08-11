@@ -77,11 +77,11 @@ export function truncateToWordLimit(text: string, limit: number): string {
   }
 
   const regex = /[a-z0-9-]+/gi
-  let match
   let wordCount = 0
   let endIdx = text.length
 
-  while ((match = regex.exec(text)) !== null) {
+  // eslint-disable-next-line no-cond-assign
+  while (regex.exec(text) !== null) {
     wordCount++
     if (wordCount === limit) {
       endIdx = regex.lastIndex

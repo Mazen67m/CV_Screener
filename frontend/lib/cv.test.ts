@@ -42,6 +42,7 @@ describe('extractCv', () => {
   const originalPost = api.post
 
   it('should call api.post with correct path, formData and auth headers', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mockFile = { name: 'test.pdf', type: 'application/pdf' } as any
     const mockToken = 'mock-token'
     const expectedResponse = {
@@ -53,14 +54,18 @@ describe('extractCv', () => {
     }
 
     let calledUrl: string | null = null
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let calledData: any = null
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let calledConfig: any = null
 
     // Overwrite api.post with mock
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     api.post = async <T = any, R = any>(url: string, data?: any, config?: any): Promise<R> => {
       calledUrl = url
       calledData = data
       calledConfig = config
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return expectedResponse as any
     }
 

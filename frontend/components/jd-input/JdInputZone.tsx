@@ -86,10 +86,11 @@ export default function JdInputZone({ onValid }: JdInputZoneProps) {
         if (!token) throw new Error('Not authenticated')
         const result = await validateJd(text, token)
         onValid?.({ cleanedText: result.cleaned_text, wordCount: result.word_count })
-      } catch (err: any) {
+      } catch (err: unknown) {
         // Prefer the structured error message from the API; fall back to a generic one.
+        const axiosErr = err as { response?: { data?: { error?: string } } }
         const message: string =
-          err?.response?.data?.error ?? 'Server validation failed. Please try again.'
+          axiosErr?.response?.data?.error ?? 'Server validation failed. Please try again.'
         setApiError(message)
         onValid?.(undefined)
       } finally {
@@ -100,6 +101,7 @@ export default function JdInputZone({ onValid }: JdInputZoneProps) {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, text])
 
   return (

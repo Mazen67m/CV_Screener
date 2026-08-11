@@ -133,15 +133,19 @@ describe('validateJd', () => {
     }
 
     let calledUrl: string | null = null
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let calledData: any = null
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let calledConfig: any = null
 
     // Inject a mock api instance — avoids mutating the global `api` singleton.
     const mockApi = {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       post: async <T = any, R = any>(url: string, data?: any, config?: any): Promise<R> => {
         calledUrl = url
         calledData = data
         calledConfig = config
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return serverResponse as any
       },
     }
