@@ -119,3 +119,7 @@ ml/models/vocabulary.json
 ml/models/idf_weights.json
 ml/corpus.json
 ml/data/
+
+
+# -- md files
+*.md

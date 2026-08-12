@@ -2,12 +2,20 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
+import { useAuth } from '@clerk/nextjs'
+import { useRouter } from 'next/navigation'
 import CvUploadZone from '@/components/cv-upload/CvUploadZone'
 import JdInputZone from '@/components/jd-input/JdInputZone'
+import { analyzeCV } from '@/lib/api'
 
 export default function NewAnalysisPage() {
+  const { getToken } = useAuth()
+  const router = useRouter()
   const [cvData, setCvData] = useState<{ extractedText: string; fileName: string } | null>(null)
   const [jdData, setJdData] = useState<{ cleanedText: string; wordCount: number } | null>(null)
+  const [jobTitle, setJobTitle] = useState('')
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleCvSuccess = (data: { extractedText: string; wordCount: number; fileName: string }) => {
     setCvData({
@@ -26,8 +34,39 @@ export default function NewAnalysisPage() {
 
   const isReady = !!cvData && !!jdData
 
+  const handleAnalyze = async () => {
+    if (!cvData || !jdData || isAnalyzing) return
+
+    setIsAnalyzing(true)
+    setError(null)
+
+    try {
+      const token = await getToken()
+      if (!token) throw new Error('Not authenticated. Please sign in again.')
+
+      const result = await analyzeCV(
+        {
+          cvText: cvData.extractedText,
+          jdText: jdData.cleanedText,
+          jobTitle: jobTitle.trim() || undefined,
+        },
+        token
+      )
+
+      router.push(`/analysis/${result.id}`)
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { error?: string } }; message?: string }
+      setError(
+        axiosErr.response?.data?.error
+        ?? axiosErr.message
+        ?? 'Analysis failed. Please try again.'
+      )
+      setIsAnalyzing(false)
+    }
+  }
+
   return (
-    <main className="min-h-screen bg-gray-950 text-white p-8">
+    <main className="min-h-screen bg-gray-950 text-white p-6 md:p-8">
       <div className="max-w-4xl mx-auto flex flex-col space-y-8">
         
         {/* Navigation / Header */}
@@ -64,19 +103,51 @@ export default function NewAnalysisPage() {
           <JdInputZone onValid={handleJdValid} />
         </div>
 
-        {/* Action Stub Button */}
+        {/* Job Title Section */}
+        <div className="mx-auto flex w-full max-w-2xl flex-col space-y-2">
+          <h2 className="text-lg font-semibold text-gray-300">
+            Step 3: Job Title <span className="text-sm font-normal text-gray-600">(optional)</span>
+          </h2>
+          <input
+            id="job-title-input"
+            type="text"
+            maxLength={200}
+            value={jobTitle}
+            onChange={(e) => setJobTitle(e.target.value)}
+            placeholder="e.g. Senior .NET Engineer at Accenture"
+            className="w-full rounded-xl border border-gray-800 bg-gray-900 px-4 py-3 text-sm text-white placeholder-gray-600 transition focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+          />
+        </div>
+
+        {/* Analyze Button */}
         <div className="flex flex-col items-center justify-center pt-4 border-t border-gray-900">
+          {error && (
+            <div className="mb-4 w-full max-w-2xl rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm font-medium text-rose-200">
+              {error}
+            </div>
+          )}
           <button
             type="button"
-            disabled={!isReady}
+            onClick={handleAnalyze}
+            disabled={!isReady || isAnalyzing}
             className={`w-full max-w-md py-4 px-6 rounded-xl font-semibold text-lg shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 ${
-              isReady
+              isReady && !isAnalyzing
                 ? 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-violet-500/20 scale-[1.01] cursor-pointer'
                 : 'bg-gray-900/50 text-gray-500 border border-gray-800/80 cursor-not-allowed shadow-none'
             }`}
           >
-            <span>Analyze Resume</span>
-            {isReady && (
+            {isAnalyzing ? (
+              <>
+                <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+                <span>Analyzing...</span>
+              </>
+            ) : (
+              <span>Analyze Resume</span>
+            )}
+            {isReady && !isAnalyzing && (
               <svg 
                 className="w-5 h-5" 
                 fill="none" 
@@ -93,7 +164,7 @@ export default function NewAnalysisPage() {
               </svg>
             )}
           </button>
-          {!isReady && (
+          {!isReady && !isAnalyzing && (
             <p className="text-xs text-gray-500 mt-2 text-center">
               Please upload a valid PDF CV and paste a job description (50 to 5000 words) to enable analysis.
             </p>

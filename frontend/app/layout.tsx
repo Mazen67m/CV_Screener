@@ -1,9 +1,13 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import localFont from 'next/font/local'
 import { ClerkProvider } from '@clerk/nextjs'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
+const geist = localFont({
+  src: './fonts/GeistVF.woff',
+  variable: '--font-geist',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'CV Screener — AI-Powered Resume Intelligence',
@@ -19,7 +23,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={inter.className}>{children}</body>
+        <body className={geist.className}>{children}</body>
       </html>
     </ClerkProvider>
   )
