@@ -74,7 +74,7 @@ public sealed class MatchingService : IMatchingService
         var dedupHash = ComputeMd5Hash(clerkId + cleanedCv + cleanedJd);
 
         // ── 4. Check for existing cached result ─────────────────────────────
-        var cached = await TryGetCachedAsync(dedupHash, cancellationToken);
+        var cached = await TryGetCachedAsync(dedupHash, clerkId, cancellationToken);
         if (cached is not null)
         {
             _logger.LogInformation("Cache hit for dedup_hash={Hash} (userId={UserId})", dedupHash, user.Id);
@@ -109,7 +109,7 @@ public sealed class MatchingService : IMatchingService
         try
         {
             var analysisId = await InsertAnalysisAsync(
-                user.Id, rawCvText, rawJdText, jobTitle,
+                user.Id, clerkId, rawCvText, rawJdText, jobTitle,
                 overallScore, textSimilarity, skillsResult, experienceResult,
                 dedupHash, cancellationToken);
 
@@ -137,7 +137,7 @@ public sealed class MatchingService : IMatchingService
                 "Dedup hash race condition (23505) for userId={UserId} — re-querying cached result.",
                 user.Id);
 
-            var raceCached = await TryGetCachedAsync(dedupHash, cancellationToken)
+            var raceCached = await TryGetCachedAsync(dedupHash, clerkId, cancellationToken)
                 ?? throw new InvalidOperationException(
                     "23505 UniqueViolation but subsequent TryGetCachedAsync returned null. " +
                     $"dedup_hash={dedupHash}");
@@ -152,9 +152,11 @@ public sealed class MatchingService : IMatchingService
     // ── DB helpers ────────────────────────────────────────────────────────────
 
     private async Task<AnalysisResult?> TryGetCachedAsync(
-        string dedupHash, CancellationToken ct)
+        string dedupHash, string clerkId, CancellationToken ct)
     {
         await using var conn = (NpgsqlConnection)await _dbFactory.OpenConnectionAsync(cancellationToken: ct);
+        await using var tx = await conn.BeginTransactionAsync(ct);
+        await SetCurrentClerkIdAsync(conn, tx, clerkId, ct);
 
         const string sql = """
             SELECT
@@ -176,12 +178,16 @@ public sealed class MatchingService : IMatchingService
             LIMIT 1;
             """;
 
-        await using var cmd = new NpgsqlCommand(sql, conn);
+        await using var cmd = new NpgsqlCommand(sql, conn, tx);
         cmd.Parameters.AddWithValue("Hash", dedupHash);
 
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         if (!await reader.ReadAsync(ct))
+        {
+            await reader.DisposeAsync();   // must close reader before committing
+            await tx.CommitAsync(ct);
             return null;
+        }
 
         var skillsResult = new SkillsResult
         {
@@ -197,7 +203,7 @@ public sealed class MatchingService : IMatchingService
                 Score = reader.GetDouble(reader.GetOrdinal("experience_score"))
             };
 
-        return new AnalysisResult
+        var result = new AnalysisResult
         {
             Id              = reader.GetGuid(reader.GetOrdinal("id")),
             JobTitle        = reader.IsDBNull(reader.GetOrdinal("job_title"))
@@ -213,10 +219,16 @@ public sealed class MatchingService : IMatchingService
             Experience      = experienceResult,
             CreatedAt       = reader.GetDateTime(reader.GetOrdinal("created_at"))
         };
+
+        await reader.DisposeAsync();
+        await tx.CommitAsync(ct);
+
+        return result;
     }
 
     private async Task<Guid> InsertAnalysisAsync(
         Guid userId,
+        string clerkId,
         string rawCvText,
         string rawJdText,
         string? jobTitle,
@@ -228,6 +240,8 @@ public sealed class MatchingService : IMatchingService
         CancellationToken ct)
     {
         await using var conn = (NpgsqlConnection)await _dbFactory.OpenConnectionAsync(cancellationToken: ct);
+        await using var tx = await conn.BeginTransactionAsync(ct);
+        await SetCurrentClerkIdAsync(conn, tx, clerkId, ct);
 
         const string sql = """
             INSERT INTO analyses
@@ -243,7 +257,7 @@ public sealed class MatchingService : IMatchingService
             RETURNING id;
             """;
 
-        await using var cmd = new NpgsqlCommand(sql, conn);
+        await using var cmd = new NpgsqlCommand(sql, conn, tx);
         cmd.Parameters.AddWithValue("UserId",          userId);
         cmd.Parameters.AddWithValue("CvText",          rawCvText);
         cmd.Parameters.AddWithValue("JdText",          rawJdText);
@@ -259,6 +273,7 @@ public sealed class MatchingService : IMatchingService
         cmd.Parameters.AddWithValue("DedupHash",       dedupHash);
 
         var result = await cmd.ExecuteScalarAsync(ct);
+        await tx.CommitAsync(ct);
         return (Guid)(result ?? throw new InvalidOperationException("INSERT did not return an ID."));
     }
 
@@ -268,5 +283,19 @@ public sealed class MatchingService : IMatchingService
     {
         var bytes = MD5.HashData(Encoding.UTF8.GetBytes(input));
         return Convert.ToHexString(bytes).ToLowerInvariant();
+    }
+
+    private static async Task SetCurrentClerkIdAsync(
+        NpgsqlConnection conn,
+        NpgsqlTransaction tx,
+        string clerkId,
+        CancellationToken cancellationToken)
+    {
+        await using var setCmd = new NpgsqlCommand(
+            "SELECT set_config('app.current_clerk_id', @ClerkId, true);",
+            conn,
+            tx);
+        setCmd.Parameters.AddWithValue("ClerkId", clerkId);
+        await setCmd.ExecuteNonQueryAsync(cancellationToken);
     }
 }

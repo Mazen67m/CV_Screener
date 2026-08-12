@@ -24,6 +24,8 @@ public sealed class AnalysisRepository : IAnalysisRepository
 
         await using var conn = (NpgsqlConnection)
             await _dbFactory.OpenConnectionAsync(cancellationToken: cancellationToken);
+        await using var tx = await conn.BeginTransactionAsync(cancellationToken);
+        await SetCurrentClerkIdAsync(conn, tx, clerkId, cancellationToken);
 
         const string sql = """
             SELECT
@@ -41,7 +43,7 @@ public sealed class AnalysisRepository : IAnalysisRepository
             LIMIT @Limit;
             """;
 
-        await using var cmd = new NpgsqlCommand(sql, conn);
+        await using var cmd = new NpgsqlCommand(sql, conn, tx);
         cmd.Parameters.AddWithValue("ClerkId", clerkId);
         cmd.Parameters.AddWithValue("Limit", effectiveLimit);
 
@@ -67,6 +69,9 @@ public sealed class AnalysisRepository : IAnalysisRepository
             });
         }
 
+        await reader.DisposeAsync();
+        await tx.CommitAsync(cancellationToken);
+
         return results;
     }
 
@@ -77,6 +82,8 @@ public sealed class AnalysisRepository : IAnalysisRepository
     {
         await using var conn = (NpgsqlConnection)
             await _dbFactory.OpenConnectionAsync(cancellationToken: cancellationToken);
+        await using var tx = await conn.BeginTransactionAsync(cancellationToken);
+        await SetCurrentClerkIdAsync(conn, tx, clerkId, cancellationToken);
 
         const string sql = """
             SELECT
@@ -100,16 +107,89 @@ public sealed class AnalysisRepository : IAnalysisRepository
             LIMIT 1;
             """;
 
+        await using var cmd = new NpgsqlCommand(sql, conn, tx);
+        cmd.Parameters.AddWithValue("Id", id);
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            await reader.DisposeAsync();   // must close reader before committing
+            await tx.CommitAsync(cancellationToken);
+            return null;
+        }
+
+        var ownerClerkId = reader.GetString(reader.GetOrdinal("owner_clerk_id"));
+        if (!string.Equals(ownerClerkId, clerkId, StringComparison.Ordinal))
+            throw new UnauthorizedAccessException();
+
+        var skills = new SkillsResult
+        {
+            Matched = JsonbHelper.Deserialize<string[]>(reader["matched_skills"]) ?? [],
+            Partial = JsonbHelper.Deserialize<string[]>(reader["partial_skills"]) ?? [],
+            Missing = JsonbHelper.Deserialize<string[]>(reader["missing_skills"]) ?? [],
+            Score = reader.GetDouble(reader.GetOrdinal("skills_score"))
+        };
+
+        var experience = JsonbHelper.Deserialize<ExperienceResult>(reader["experience_data"])
+            ?? new ExperienceResult
+            {
+                Score = reader.GetDouble(reader.GetOrdinal("experience_score"))
+            };
+
+        var result = new AnalysisResult
+        {
+            Id = reader.GetGuid(reader.GetOrdinal("id")),
+            JobTitle = reader.IsDBNull(reader.GetOrdinal("job_title"))
+                ? null
+                : reader.GetString(reader.GetOrdinal("job_title")),
+            CvText = reader.GetString(reader.GetOrdinal("cv_text")),
+            JdText = reader.GetString(reader.GetOrdinal("jd_text")),
+            OverallScore = reader.GetInt32(reader.GetOrdinal("overall_score")),
+            TextSimilarity = reader.GetDouble(reader.GetOrdinal("text_similarity")),
+            SkillsScore = skills.Score,
+            ExperienceScore = reader.GetDouble(reader.GetOrdinal("experience_score")),
+            Skills = skills,
+            Experience = experience,
+            CreatedAt = reader.GetDateTime(reader.GetOrdinal("created_at"))
+        };
+
+        await reader.DisposeAsync();
+        await tx.CommitAsync(cancellationToken);
+
+        return result;
+    }
+
+    public async Task<AnalysisResult?> GetByIdPublicAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        await using var conn = (NpgsqlConnection)
+            await _dbFactory.OpenConnectionAsync("share", cancellationToken: cancellationToken);
+
+        const string sql = """
+            SELECT
+                id,
+                job_title,
+                overall_score,
+                text_similarity,
+                skills_score,
+                experience_score,
+                matched_skills,
+                partial_skills,
+                missing_skills,
+                experience_data,
+                created_at
+            FROM analyses
+            WHERE id = @Id
+            LIMIT 1;
+            """;
+
         await using var cmd = new NpgsqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("Id", id);
 
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
         if (!await reader.ReadAsync(cancellationToken))
             return null;
-
-        var ownerClerkId = reader.GetString(reader.GetOrdinal("owner_clerk_id"));
-        if (!string.Equals(ownerClerkId, clerkId, StringComparison.Ordinal))
-            throw new UnauthorizedAccessException();
 
         var skills = new SkillsResult
         {
@@ -131,8 +211,8 @@ public sealed class AnalysisRepository : IAnalysisRepository
             JobTitle = reader.IsDBNull(reader.GetOrdinal("job_title"))
                 ? null
                 : reader.GetString(reader.GetOrdinal("job_title")),
-            CvText = reader.GetString(reader.GetOrdinal("cv_text")),
-            JdText = reader.GetString(reader.GetOrdinal("jd_text")),
+            CvText = string.Empty,
+            JdText = string.Empty,
             OverallScore = reader.GetInt32(reader.GetOrdinal("overall_score")),
             TextSimilarity = reader.GetDouble(reader.GetOrdinal("text_similarity")),
             SkillsScore = skills.Score,
@@ -141,5 +221,19 @@ public sealed class AnalysisRepository : IAnalysisRepository
             Experience = experience,
             CreatedAt = reader.GetDateTime(reader.GetOrdinal("created_at"))
         };
+    }
+
+    private static async Task SetCurrentClerkIdAsync(
+        NpgsqlConnection conn,
+        NpgsqlTransaction tx,
+        string clerkId,
+        CancellationToken cancellationToken)
+    {
+        await using var setCmd = new NpgsqlCommand(
+            "SELECT set_config('app.current_clerk_id', @ClerkId, true);",
+            conn,
+            tx);
+        setCmd.Parameters.AddWithValue("ClerkId", clerkId);
+        await setCmd.ExecuteNonQueryAsync(cancellationToken);
     }
 }

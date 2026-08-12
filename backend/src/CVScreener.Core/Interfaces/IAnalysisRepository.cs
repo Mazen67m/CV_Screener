@@ -13,4 +13,8 @@ public interface IAnalysisRepository
         Guid id,
         string clerkId,
         CancellationToken cancellationToken = default);
+
+    Task<AnalysisResult?> GetByIdPublicAsync(
+        Guid id,
+        CancellationToken cancellationToken = default);
 }
