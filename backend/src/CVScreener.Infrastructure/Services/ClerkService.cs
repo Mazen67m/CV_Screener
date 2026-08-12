@@ -12,6 +12,7 @@ public class ClerkService : IClerkService
 
     private readonly HttpClient _httpClient;
     private readonly ILogger<ClerkService> _logger;
+    private readonly bool _isConfigured;
 
     public ClerkService(HttpClient httpClient, IConfiguration config, ILogger<ClerkService> logger)
     {
@@ -20,10 +21,17 @@ public class ClerkService : IClerkService
 
         var secretKey =
             (string.IsNullOrWhiteSpace(config["Clerk:SecretKey"]) ? null : config["Clerk:SecretKey"])
-            ?? (string.IsNullOrWhiteSpace(config["CLERK__SECRET_KEY"]) ? null : config["CLERK__SECRET_KEY"])
-            ?? throw new InvalidOperationException(
-                "Clerk secret key is not configured. " +
-                "Set Clerk:SecretKey in appsettings or CLERK__SECRET_KEY in the environment.");
+            ?? (string.IsNullOrWhiteSpace(config["CLERK__SECRET_KEY"]) ? null : config["CLERK__SECRET_KEY"]);
+
+        if (string.IsNullOrWhiteSpace(secretKey))
+        {
+            _isConfigured = false;
+            _logger.LogWarning(
+                "Clerk secret key is not configured. Role metadata sync will be skipped.");
+            return;
+        }
+
+        _isConfigured = true;
 
         // Set Bearer token once for the lifetime of this typed client.
         _httpClient.DefaultRequestHeaders.Authorization =
@@ -33,6 +41,14 @@ public class ClerkService : IClerkService
     /// <inheritdoc/>
     public async Task UpdatePublicMetadataAsync(string clerkId, object metadata)
     {
+        if (!_isConfigured)
+        {
+            _logger.LogWarning(
+                "Skipping Clerk metadata update for user {ClerkId} because Clerk secret key is not configured.",
+                clerkId);
+            return;
+        }
+
         // Clerk PATCH /v1/users/{userId}/metadata merges; it does NOT overwrite
         // keys that are absent from the request body.
         var url = $"{ClerkApiBase}/users/{clerkId}/metadata";

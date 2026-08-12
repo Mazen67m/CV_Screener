@@ -1,5 +1,6 @@
 using CVScreener.Core.Entities;
 using CVScreener.Core.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace CVScreener.Infrastructure.Services;
 
@@ -7,11 +8,16 @@ public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
     private readonly IClerkService _clerkService;
+    private readonly ILogger<AuthService> _logger;
 
-    public AuthService(IUserRepository userRepository, IClerkService clerkService)
+    public AuthService(
+        IUserRepository userRepository,
+        IClerkService clerkService,
+        ILogger<AuthService> logger)
     {
         _userRepository = userRepository;
         _clerkService = clerkService;
+        _logger = logger;
     }
 
     public async Task<User> SetUserRoleAsync(string clerkId, string email, string role)
@@ -32,7 +38,17 @@ public class AuthService : IAuthService
 
         // 3. Mirror the role into Clerk publicMetadata so middleware/frontend
         //    can read it from the session token without an extra API call.
-        await _clerkService.UpdatePublicMetadataAsync(clerkId, new { role = role });
+        try
+        {
+            await _clerkService.UpdatePublicMetadataAsync(clerkId, new { role = role });
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "User role was saved in the database, but Clerk metadata sync failed for user {ClerkId}.",
+                clerkId);
+        }
 
         // 4. Return the updated profile.
         var updatedUser = await _userRepository.GetByClerkIdAsync(clerkId);

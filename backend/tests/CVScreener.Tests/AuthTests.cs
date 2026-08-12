@@ -7,6 +7,7 @@ using CVScreener.Core.Interfaces;
 using CVScreener.Infrastructure.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -23,7 +24,10 @@ public class AuthTests
     {
         _userRepository = new MockUserRepository();
         _clerkService   = new MockClerkService();
-        _authService    = new AuthService(_userRepository, _clerkService);
+        _authService    = new AuthService(
+            _userRepository,
+            _clerkService,
+            NullLogger<AuthService>.Instance);
         _controller     = new AuthController(
             _userRepository,
             _authService,
@@ -154,12 +158,15 @@ public class AuthTests
     }
 
     [Fact]
-    public async Task SetRole_ClerkSyncFails_Returns500AndRoleIsPersistedInDb()
+    public async Task SetRole_ClerkSyncFails_ReturnsSavedUserProfile()
     {
         // Arrange: wire up a controller backed by a Clerk service that always throws.
         var userRepo      = new MockUserRepository();
         var failingClerk  = new FailingMockClerkService();
-        var authService   = new AuthService(userRepo, failingClerk);
+        var authService   = new AuthService(
+            userRepo,
+            failingClerk,
+            NullLogger<AuthService>.Instance);
         var controller    = new AuthController(
             userRepo,
             authService,
@@ -181,15 +188,27 @@ public class AuthTests
         // Act
         var result = await controller.SetRole(new SetRoleRequest { Role = "job_seeker" });
 
-        // Assert: HTTP 500 surfaced to the caller.
-        Assert.IsType<ObjectResult>(result);
-        Assert.Equal(500, ((ObjectResult)result).StatusCode);
+        // Assert: the saved DB role is still returned even when Clerk metadata sync fails.
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var response = Assert.IsType<UserResponse>(ok.Value);
+        Assert.Equal("user_syncfail", response.ClerkId);
+        Assert.Equal("job_seeker", response.Role);
 
-        // Assert: role IS persisted in DB despite the Clerk failure
-        // (split-brain: DB is ahead of Clerk metadata — recoverable state).
         var saved = await userRepo.GetByClerkIdAsync("user_syncfail");
         Assert.NotNull(saved);
         Assert.Equal("job_seeker", saved!.Role);
+    }
+
+    [Fact]
+    public async Task ClerkService_NoSecretKey_SkipsMetadataSyncWithoutThrowing()
+    {
+        var config = new ConfigurationBuilder().Build();
+        var service = new ClerkService(
+            new HttpClient(),
+            config,
+            NullLogger<ClerkService>.Instance);
+
+        await service.UpdatePublicMetadataAsync("user_no_secret", new { role = "job_seeker" });
     }
 }
 
