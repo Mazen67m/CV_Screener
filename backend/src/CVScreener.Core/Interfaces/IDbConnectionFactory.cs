@@ -13,4 +13,12 @@ public interface IDbConnectionFactory
     Task<IDbConnection> OpenConnectionAsync(
         int maxAttempts = 3,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Opens a named connection, such as the read-only public share connection.
+    /// </summary>
+    Task<IDbConnection> OpenConnectionAsync(
+        string connectionName,
+        int maxAttempts = 3,
+        CancellationToken cancellationToken = default);
 }

@@ -9,9 +9,11 @@ namespace CVScreener.Infrastructure.Data;
 public class DbConnectionFactory : IDbConnectionFactory
 {
     private readonly string _connectionString;
+    private readonly IConfiguration _config;
 
     public DbConnectionFactory(IConfiguration config)
     {
+        _config = config;
         var cs = config.GetConnectionString("DefaultConnection");
         if (string.IsNullOrWhiteSpace(cs))
             throw new InvalidOperationException(
@@ -33,10 +35,37 @@ public class DbConnectionFactory : IDbConnectionFactory
         int maxAttempts = 3,
         CancellationToken cancellationToken = default)
     {
+        return await OpenConnectionWithRetryAsync(_connectionString, maxAttempts, cancellationToken);
+    }
+
+    public async Task<IDbConnection> OpenConnectionAsync(
+        string connectionName,
+        int maxAttempts = 3,
+        CancellationToken cancellationToken = default)
+    {
+        var connectionString = connectionName switch
+        {
+            "share" => _config.GetConnectionString("ShareConnection")
+                ?? _config["DB_SHARE_CONNECTION_STRING"],
+            _ => _connectionString
+        };
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new InvalidOperationException(
+                $"Connection string for named connection '{connectionName}' is missing or empty.");
+
+        return await OpenConnectionWithRetryAsync(connectionString, maxAttempts, cancellationToken);
+    }
+
+    private static async Task<IDbConnection> OpenConnectionWithRetryAsync(
+        string connectionString,
+        int maxAttempts,
+        CancellationToken cancellationToken)
+    {
         var delayMs = 500;
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            var conn = new NpgsqlConnection(_connectionString);
+            var conn = new NpgsqlConnection(connectionString);
             try
             {
                 await conn.OpenAsync(cancellationToken);

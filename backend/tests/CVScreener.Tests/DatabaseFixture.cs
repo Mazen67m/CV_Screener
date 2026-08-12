@@ -53,4 +53,16 @@ internal sealed class TestDbConnectionFactory : IDbConnectionFactory
         await connection.OpenAsync(cancellationToken);
         return connection;
     }
+
+    // Named connections (e.g. "share") use the same test container connection —
+    // no separate role is created in the test environment.
+    public async Task<System.Data.IDbConnection> OpenConnectionAsync(
+        string connectionName,
+        int maxAttempts = 3,
+        CancellationToken cancellationToken = default)
+    {
+        var connection = new NpgsqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+        return connection;
+    }
 }
