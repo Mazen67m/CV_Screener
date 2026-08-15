@@ -1,13 +1,17 @@
 /** @type {import('next').NextConfig} */
-const clerkFapiUrl = process.env.NEXT_PUBLIC_CLERK_FAPI_URL
+
+// Upstream Clerk FAPI — decoded from the live publishable key.
+// Do NOT set this to the proxy URL (cvscreener1.vercel.app/__clerk) — that creates a loop.
+const CLERK_FAPI = 'https://clerk.cvscreener1.clerk.accounts.dev'
 
 const nextConfig = {
   async rewrites() {
-    if (!clerkFapiUrl) return []
     return [
       {
+        // Forward all Clerk auto-proxy requests to the upstream Clerk FAPI.
+        // Required for *.vercel.app domains (no DNS control).
         source: '/__clerk/:path*',
-        destination: `${clerkFapiUrl}/:path*`,
+        destination: `${CLERK_FAPI}/:path*`,
       },
     ]
   },
