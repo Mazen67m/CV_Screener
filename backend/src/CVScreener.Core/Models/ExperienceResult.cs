@@ -31,4 +31,11 @@ public class ExperienceResult
     /// Returns 0.5 when neither text mentions years or seniority (neutral, non-penalising).
     /// </summary>
     public double Score { get; set; }
+
+    /// <summary>
+    /// Optional human-readable note describing a detected experience gap.
+    /// Examples: "Role requires 5+ years of experience" or "Role targets a Senior level."
+    /// Null when no meaningful gap is detected.
+    /// </summary>
+    public string? MismatchNote { get; set; }
 }

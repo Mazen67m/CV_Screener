@@ -99,6 +99,7 @@ public sealed class MatchingService : IMatchingService
                      + WeightExperience * experienceResult.Score;
 
         var overallScore = (int)Math.Round(Math.Clamp(rawScore * 100, 0, 100));
+        var scoreLabel   = ScoreLabel.FromScore(overallScore);
 
         _logger.LogInformation(
             "Score for userId={UserId}: overall={Score}, text={T:F4}, skills={S:F4}, exp={E:F4}",
@@ -120,6 +121,7 @@ public sealed class MatchingService : IMatchingService
                 CvText          = rawCvText,
                 JdText          = rawJdText,
                 OverallScore    = overallScore,
+                ScoreLabel      = scoreLabel,
                 TextSimilarity  = textSimilarity,
                 SkillsScore     = skillsResult.Score,
                 ExperienceScore = experienceResult.Score,

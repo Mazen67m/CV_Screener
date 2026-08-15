@@ -18,6 +18,12 @@ public class AnalyzeResponse
     /// </summary>
     public int OverallScore { get; set; }
 
+    /// <summary>
+    /// Human-readable score label (DEC-018 / F-07 spec).
+    /// Values: "Poor Match" | "Below Average" | "Average Match" | "Good Match" | "Excellent Match"
+    /// </summary>
+    public string ScoreLabel { get; set; } = string.Empty;
+
     /// <summary>Raw TF-IDF cosine similarity between CV and JD vectors. Range: [0, 1].</summary>
     public double TextSimilarity { get; set; }
 
@@ -80,4 +86,11 @@ public class ExperienceBreakdownDto
 
     /// <summary>Normalised experience score. Range: [0, 1]. 0.5 = neutral (no data).</summary>
     public double Score { get; set; }
+
+    /// <summary>
+    /// Optional human-readable note about an experience gap.
+    /// Example: "Role requires 5+ years of experience (CV indicates ~2 years)."
+    /// Null when no significant gap is detected.
+    /// </summary>
+    public string? MismatchNote { get; set; }
 }

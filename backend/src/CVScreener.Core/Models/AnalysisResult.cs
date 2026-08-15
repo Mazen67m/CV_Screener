@@ -24,6 +24,12 @@ public class AnalysisResult
     /// </summary>
     public int OverallScore { get; set; }
 
+    /// <summary>
+    /// Human-readable label derived from OverallScore via ScoreLabel.FromScore().
+    /// Values: "Poor Match" | "Below Average" | "Average Match" | "Good Match" | "Excellent Match"
+    /// </summary>
+    public string ScoreLabel { get; set; } = string.Empty;
+
     /// <summary>Raw TF-IDF cosine similarity between CV and JD vectors. Range: [0, 1].</summary>
     public double TextSimilarity { get; set; }
 

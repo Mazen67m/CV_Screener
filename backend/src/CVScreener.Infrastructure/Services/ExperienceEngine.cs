@@ -60,6 +60,8 @@ public sealed class ExperienceEngine : IExperienceEngine
 
         // Both unknowns → neutral score
         double score;
+        string? mismatchNote = null;
+
         if (cvYears == 0 && requiredYears == 0)
         {
             score = 0.5;
@@ -67,6 +69,13 @@ public sealed class ExperienceEngine : IExperienceEngine
         else
         {
             score = Math.Min(cvYears / Math.Max(requiredYears, 1.0), 1.0);
+
+            // Generate a mismatch note when the gap is significant (> 1 year short)
+            if (requiredYears > 0 && cvYears < requiredYears - 1)
+            {
+                mismatchNote = $"Role requires {requiredYears}+ years of experience" +
+                               (cvFromFallback ? string.Empty : $" (CV indicates ~{cvYears:0} years)") + ".";
+            }
         }
 
         _logger.LogDebug(
@@ -75,11 +84,12 @@ public sealed class ExperienceEngine : IExperienceEngine
 
         return new ExperienceResult
         {
-            CvYears                  = cvYears,
-            RequiredYears            = requiredYears,
-            CvYearsFromFallback      = cvFromFallback,
+            CvYears                   = cvYears,
+            RequiredYears             = requiredYears,
+            CvYearsFromFallback       = cvFromFallback,
             RequiredYearsFromFallback = jdFromFallback,
-            Score                    = score
+            Score                     = score,
+            MismatchNote              = mismatchNote
         };
     }
 

@@ -253,13 +253,15 @@ public class AnalysisControllerTests
     private static AnalysisController BuildController(
         IMatchingService? matchingService = null,
         IAnalysisRepository? repository = null,
-        ICvExtractionService? cvExtractionService = null)
+        ICvExtractionService? cvExtractionService = null,
+        ILearningPathRepository? learningPathRepository = null)
     {
-        matchingService ??= Mock.Of<IMatchingService>();
-        repository ??= Mock.Of<IAnalysisRepository>();
-        cvExtractionService ??= Mock.Of<ICvExtractionService>();
+        matchingService        ??= Mock.Of<IMatchingService>();
+        repository             ??= Mock.Of<IAnalysisRepository>();
+        cvExtractionService    ??= Mock.Of<ICvExtractionService>();
+        learningPathRepository ??= Mock.Of<ILearningPathRepository>();
 
-        return new AnalysisController(matchingService, repository, cvExtractionService)
+        return new AnalysisController(matchingService, repository, cvExtractionService, learningPathRepository)
         {
             ControllerContext = new ControllerContext
             {

@@ -11,6 +11,9 @@ public class AnalysisHistoryItem
 
     public int OverallScore { get; set; }
 
+    /// <summary>Human-readable score label. See ScoreLabel.FromScore().</summary>
+    public string ScoreLabel { get; set; } = string.Empty;
+
     public int MatchedSkillsCount { get; set; }
 
     public int MissingSkillsCount { get; set; }

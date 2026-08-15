@@ -63,6 +63,7 @@ public sealed class AnalysisRepository : IAnalysisRepository
                     ? null
                     : reader.GetString(reader.GetOrdinal("job_title")),
                 OverallScore = reader.GetInt32(reader.GetOrdinal("overall_score")),
+                ScoreLabel = ScoreLabel.FromScore(reader.GetInt32(reader.GetOrdinal("overall_score"))),
                 MatchedSkillsCount = matched.Length + partial.Length,
                 MissingSkillsCount = missing.Length,
                 CreatedAt = reader.GetDateTime(reader.GetOrdinal("created_at"))
@@ -145,6 +146,7 @@ public sealed class AnalysisRepository : IAnalysisRepository
             CvText = reader.GetString(reader.GetOrdinal("cv_text")),
             JdText = reader.GetString(reader.GetOrdinal("jd_text")),
             OverallScore = reader.GetInt32(reader.GetOrdinal("overall_score")),
+            ScoreLabel = ScoreLabel.FromScore(reader.GetInt32(reader.GetOrdinal("overall_score"))),
             TextSimilarity = reader.GetDouble(reader.GetOrdinal("text_similarity")),
             SkillsScore = skills.Score,
             ExperienceScore = reader.GetDouble(reader.GetOrdinal("experience_score")),
@@ -214,6 +216,7 @@ public sealed class AnalysisRepository : IAnalysisRepository
             CvText = string.Empty,
             JdText = string.Empty,
             OverallScore = reader.GetInt32(reader.GetOrdinal("overall_score")),
+            ScoreLabel = ScoreLabel.FromScore(reader.GetInt32(reader.GetOrdinal("overall_score"))),
             TextSimilarity = reader.GetDouble(reader.GetOrdinal("text_similarity")),
             SkillsScore = skills.Score,
             ExperienceScore = reader.GetDouble(reader.GetOrdinal("experience_score")),

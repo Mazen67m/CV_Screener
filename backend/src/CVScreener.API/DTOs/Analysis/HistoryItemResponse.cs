@@ -17,6 +17,9 @@ public class HistoryItemResponse
     /// <summary>Final weighted score (0–100 integer).</summary>
     public int OverallScore { get; set; }
 
+    /// <summary>Human-readable score label. See ScoreLabel.FromScore().</summary>
+    public string ScoreLabel { get; set; } = string.Empty;
+
     /// <summary>Number of skills found in both CV and JD (matched + partial).</summary>
     public int MatchedSkillsCount { get; set; }
 

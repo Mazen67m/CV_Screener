@@ -15,15 +15,18 @@ public class AnalysisController : ControllerBase
     private readonly IMatchingService _matchingService;
     private readonly IAnalysisRepository _analysisRepository;
     private readonly ICvExtractionService _cvExtractionService;
+    private readonly ILearningPathRepository _learningPathRepository;
 
     public AnalysisController(
         IMatchingService matchingService,
         IAnalysisRepository analysisRepository,
-        ICvExtractionService cvExtractionService)
+        ICvExtractionService cvExtractionService,
+        ILearningPathRepository learningPathRepository)
     {
-        _matchingService = matchingService;
-        _analysisRepository = analysisRepository;
-        _cvExtractionService = cvExtractionService;
+        _matchingService          = matchingService;
+        _analysisRepository       = analysisRepository;
+        _cvExtractionService      = cvExtractionService;
+        _learningPathRepository   = learningPathRepository;
     }
 
     /// <summary>
@@ -101,6 +104,24 @@ public class AnalysisController : ControllerBase
         return Ok(MapToAnalyzeResponse(result));
     }
 
+    /// <summary>
+    /// Returns missing skills for an analysis sorted by frequency across all of the user's analyses.
+    /// The most commonly missing skill comes first, helping prioritise learning effort.
+    /// </summary>
+    [HttpGet("{id:guid}/learning-path")]
+    [ProducesResponseType(typeof(LearningPathResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetLearningPath(Guid id, CancellationToken ct)
+    {
+        var clerkId = GetClerkId();
+        if (string.IsNullOrEmpty(clerkId))
+            return Unauthorized(new { error = "Clerk ID not found in token claims.", details = (string[]?)null });
+
+        var skills = await _learningPathRepository.GetSortedMissingSkillsAsync(id, clerkId, ct);
+        return Ok(new LearningPathResponse { Skills = skills });
+    }
+
     private static AnalyzeCreatedResponse MapToAnalyzeCreatedResponse(AnalysisResult result)
     {
         var response = new AnalyzeCreatedResponse
@@ -121,15 +142,16 @@ public class AnalysisController : ControllerBase
 
     private static void PopulateAnalyzeResponse(AnalyzeResponse response, AnalysisResult result)
     {
-        response.Id = result.Id;
-        response.JobTitle = result.JobTitle;
-        response.CvText = result.CvText;
-        response.JdText = result.JdText;
-        response.OverallScore = result.OverallScore;
+        response.Id             = result.Id;
+        response.JobTitle       = result.JobTitle;
+        response.CvText         = result.CvText;
+        response.JdText         = result.JdText;
+        response.OverallScore   = result.OverallScore;
+        response.ScoreLabel     = result.ScoreLabel;
         response.TextSimilarity = result.TextSimilarity;
-        response.SkillsScore = result.SkillsScore;
+        response.SkillsScore    = result.SkillsScore;
         response.ExperienceScore = result.ExperienceScore;
-        response.CreatedAt = result.CreatedAt;
+        response.CreatedAt      = result.CreatedAt;
         response.Skills = new SkillBreakdownDto
         {
             Matched = result.Skills.Matched,
@@ -138,20 +160,22 @@ public class AnalysisController : ControllerBase
         };
         response.Experience = new ExperienceBreakdownDto
         {
-            CvYears = result.Experience.CvYears,
+            CvYears       = result.Experience.CvYears,
             RequiredYears = result.Experience.RequiredYears,
-            Score = result.Experience.Score
+            Score         = result.Experience.Score,
+            MismatchNote  = result.Experience.MismatchNote
         };
     }
 
     private static HistoryItemResponse MapToHistoryItemResponse(AnalysisHistoryItem item) => new()
     {
-        Id = item.Id,
-        JobTitle = item.JobTitle,
-        OverallScore = item.OverallScore,
+        Id                 = item.Id,
+        JobTitle           = item.JobTitle,
+        OverallScore       = item.OverallScore,
+        ScoreLabel         = item.ScoreLabel,
         MatchedSkillsCount = item.MatchedSkillsCount,
         MissingSkillsCount = item.MissingSkillsCount,
-        CreatedAt = item.CreatedAt
+        CreatedAt          = item.CreatedAt
     };
 
     private async Task<string> ResolveCvTextAsync(AnalyzeRequest request)
