@@ -8,6 +8,14 @@ import { getUploadZoneStyles, type UploadState } from './cvStyles'
 export type { UploadState }
 export { getUploadZoneStyles }
 
+export interface CvUploadZoneProps {
+  onSuccess?: (result: {
+    extractedText: string
+    wordCount: number
+    fileName: string
+  }) => void
+}
+
 export default function CvUploadZone({ onSuccess }: CvUploadZoneProps) {
   const { getToken } = useAuth()
   const [state, setState] = useState<UploadState>('default')
