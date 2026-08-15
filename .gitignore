@@ -1,125 +1,191 @@
+# ==============================================================================
+# Git Ignore Configuration
+# Project: CV Screener (.NET 8 + Next.js 14 + ML / Python)
+# ==============================================================================
 
-# ── Next.js ───────────────────────────────────────────────
+# ── Next.js / Frontend / Node ────────────────────────────────────────────────
+node_modules/
+**/node_modules/
 frontend/.next/
+**/.next/
 frontend/out/
-frontend/node_modules/
+**/out/
+frontend/build/
+**/build/
+frontend/dist/
+**/dist/
+
+# TypeScript & Build Caches
+*.tsbuildinfo
+frontend/tsconfig.tsbuildinfo
+.turbo/
+.vercel/
+
+# Package Manager Logs & Artifacts
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnp
+.pnp.js
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# ── .NET / C# ────────────────────────────────────────────────────────────────
+**/[Bb]in/
+**/[Oo]bj/
+**/[Aa]rtifacts/
+**/[Pp]ublish/
+
+# Visual Studio & Rider
+.vs/
+.idea/
+*.user
+*.suo
+*.userprefs
+*.userosscache
+*.sln.docstates
+*.slnx.sqlite
+*.ncrunch*
+*.DotSettings.user
+
+# NuGet & Publish Artifacts
+*.nupkg
+backend/**/packages/
+!backend/**/.nuget/packages/.gitignore
+backend/**/project.lock.json
+backend/**/project.fragment.lock.json
+backend/**/*.PublishSettings
+
+# ── Python / Machine Learning ────────────────────────────────────────────────
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+ml/.venv/
+ml/venv/
+ml/env/
+
+# Python Build / Distribution
+ml/*.egg-info/
+ml/dist/
+ml/build/
+ml/.eggs/
+*.egg-info/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# ML Generated Models & Large Corpora (Runtime / Training outputs)
+ml/data/
+ml/tmp_check/
+ml/corpus.json
+ml/models/*.onnx
+ml/models/*.pkl
+ml/models/*.joblib
+ml/models/vocabulary.json
+ml/models/idf_weights.json
+
+# Keep taxonomy file tracked
+!ml/skills_taxonomy.json
+
+# ── Testing & Code Coverage ──────────────────────────────────────────────────
+coverage/
+**/coverage/
+.nyc_output/
+.pytest_cache/
+.coverage
+htmlcov/
+playwright-report/
+test-results/
+blob-report/
+
+# ── Secrets & Environment Variables ──────────────────────────────────────────
+# Ignore all .env files EXCEPT example templates
+.env
+.env.*
+*.env
+*.env.*
+!.env.example
+!.env.*.example
+!.env.local.example
+
+# Frontend Local Env Files
 frontend/.env.local
 frontend/.env*.local
 frontend/.env.development.local
 frontend/.env.test.local
 frontend/.env.production.local
-frontend/npm-debug.log*
-frontend/yarn-debug.log*
-frontend/yarn-error.log*
-frontend/.pnpm-debug.log*
-frontend/tsconfig.tsbuildinfo
 
-# ── .NET ──────────────────────────────────────────────────
-backend/src/**/bin/
-backend/src/**/obj/
-backend/tests/**/bin/
-backend/tests/**/obj/
-
-# Secret env files — never commit these
+# Backend Secret Envs
 backend/**/.env
 backend/**/.env.*
 
-# Visual Studio
-*.user
-*.suo
-*.userosscache
-*.sln.docstates
-.vs/
-.vscode/
-*.ncrunch*
-
-# Publish output
-backend/**/publish/
-backend/**/*.PublishSettings
-
-# NuGet
-backend/**/*.nupkg
-backend/**/packages/
-!backend/**/.nuget/packages/.gitignore
-backend/**/project.lock.json
-backend/**/project.fragment.lock.json
-backend/**/artifacts/
-
-# Rider
-.idea/
-*.DotSettings.user
-
-# ── Python / ML ───────────────────────────────────────────
-ml/__pycache__/
-ml/**/__pycache__/
-ml/.venv/
-ml/venv/
-ml/env/
-ml/*.egg-info/
-ml/dist/
-ml/build/
-ml/.eggs/
-ml/models/*.onnx
-ml/models/*.pkl
-ml/models/*.joblib
-ml/*.pyc
-ml/**/*.pyc
-ml/tmp_check/
-*.pyo
-
-# Jupyter Notebooks
-.ipynb_checkpoints/
-
-# ── Docker ────────────────────────────────────────────────
-*.dockerignore
-docker-compose.override.yml
-
-# ── Environment & Secrets ─────────────────────────────────
-.env
-.env.*
-!.env.example
+# Certificates & Private Keys
 *.pem
 *.key
 *.crt
+*.pfx
+*.p12
+*.cer
 
-# ── OS ────────────────────────────────────────────────────
+# ── Docker & Local Overrides ─────────────────────────────────────────────────
+docker-compose.override.yml
+*.local.yml
+*.local.yaml
+
+# ── Agent / IDE / Tooling Artifacts ──────────────────────────────────────────
+.agents/
+.impeccable/
+.gemini/
+.cursor/
+.claude/
+skills-lock.json
+
+# VS Code settings customization (allow sharing essential settings)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# ── Operating System ─────────────────────────────────────────────────────────
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
 Thumbs.db
-Desktop.ini
 ehthumbs.db
+Desktop.ini
 
-# ── Logs & Temp ───────────────────────────────────────────
+# ── Logs & Temporary Files ───────────────────────────────────────────────────
 *.log
 logs/
 tmp/
 temp/
+*.tmp
 
-# ── Binary & Media Assets ─────────────────────────────────
+# ── User Uploads & Runtime Blobs ─────────────────────────────────────────────
+uploads/
+**/uploads/
 *.pdf
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.webp
-*.svg
-*.ico
-*.mp4
-*.mp3
 
-# ── Internal / Agent Folders & Scripts ───────────────────────────────────────
+# ── Internal Drafts & Marketing ──────────────────────────────────────────────
 Linkedin Posts & Docs/
 .ai/
-
-# ── Database Scripts (internal) ───────────────────────────────────────────────
-*.sql
-backend/database/
-
-# ── Generated ML Artifacts (large runtime outputs) ────────
-ml/models/vocabulary.json
-ml/models/idf_weights.json
-ml/corpus.json
-ml/data/
-
-
-# -- md files
 *.md
+*.sql
+
+
+
+.fonts
