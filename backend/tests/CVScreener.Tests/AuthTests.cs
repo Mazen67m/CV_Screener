@@ -26,6 +26,7 @@ public class AuthTests
         _clerkService   = new MockClerkService();
         _authService    = new AuthService(
             _userRepository,
+            new NullUserProfileRepository(),
             _clerkService,
             NullLogger<AuthService>.Instance);
         _controller     = new AuthController(
@@ -165,6 +166,7 @@ public class AuthTests
         var failingClerk  = new FailingMockClerkService();
         var authService   = new AuthService(
             userRepo,
+            new NullUserProfileRepository(),
             failingClerk,
             NullLogger<AuthService>.Instance);
         var controller    = new AuthController(
@@ -275,7 +277,15 @@ public class MockClerkService : IClerkService
 public class FailingMockClerkService : IClerkService
 {
     public Task UpdatePublicMetadataAsync(string clerkId, object metadata)
-    {
-        throw new HttpRequestException("Simulated Clerk API failure.");
-    }
+        => throw new HttpRequestException("Simulated Clerk API failure.");
+}
+
+/// <summary>No-op profile repository for tests that don't exercise profile persistence.</summary>
+public class NullUserProfileRepository : IUserProfileRepository
+{
+    public Task UpsertAsync(CVScreener.Core.Entities.UserProfile profile, CancellationToken ct = default)
+        => Task.CompletedTask;
+
+    public Task<CVScreener.Core.Entities.UserProfile?> GetByUserIdAsync(Guid userId, CancellationToken ct = default)
+        => Task.FromResult<CVScreener.Core.Entities.UserProfile?>(null);
 }

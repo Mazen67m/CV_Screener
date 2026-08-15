@@ -94,13 +94,26 @@ public class AuthController : ControllerBase
         try
         {
             var clerkId = GetClerkIdFromToken();
-            var email = GetEmailFromToken();
+            var email   = GetEmailFromToken();
 
             if (string.IsNullOrEmpty(clerkId))
                 return Unauthorized(new { error = "Clerk ID not found in token claims." });
 
-            // Delegate upsert, set-role, Clerk sync, and return-user to AuthService
-            var updatedUser = await _authService.SetUserRoleAsync(clerkId, email, request.Role);
+            // Build the optional profile from the request fields (DEC-019)
+            var profile = new UserProfile
+            {
+                TargetRole          = request.TargetRole,
+                ExperienceLevel     = request.ExperienceLevel,
+                YearsOfExperience   = request.YearsOfExperience,
+                PreferredIndustries = request.PreferredIndustries,
+                CompanyName         = request.CompanyName,
+                Industry            = request.Industry,
+                CompanySize         = request.CompanySize,
+                HiringRoles         = request.HiringRoles,
+            };
+
+            // Delegate upsert, set-role, profile persist, Clerk sync, and return-user to AuthService
+            var updatedUser = await _authService.SetUserRoleAsync(clerkId, email, request.Role, profile);
 
             return Ok(MapToResponse(updatedUser));
         }
