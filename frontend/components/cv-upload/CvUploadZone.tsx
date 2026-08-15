@@ -3,32 +3,10 @@
 import React, { useState, useRef, DragEvent, ChangeEvent } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { validateCvFile, extractCv } from '../../lib/cv'
+import { getUploadZoneStyles, type UploadState } from './cvStyles'
 
-export type UploadState = 'default' | 'dragging' | 'uploading' | 'success' | 'error'
-
-interface CvUploadZoneProps {
-  onSuccess?: (data: { extractedText: string; wordCount: number; fileName: string }) => void
-}
-
-/**
- * Gets the CSS border and background classes based on the current upload state.
- * @param state The current UploadState
- */
-export function getUploadZoneStyles(state: UploadState): string {
-  switch (state) {
-    case 'dragging':
-      return 'border-violet-500 bg-violet-950/20 shadow-[0_0_20px_rgba(139,92,246,0.15)] scale-[1.01]'
-    case 'uploading':
-      return 'border-blue-500 bg-blue-950/10 cursor-not-allowed'
-    case 'success':
-      return 'border-emerald-500 bg-emerald-950/10 shadow-[0_0_20px_rgba(16,185,129,0.1)]'
-    case 'error':
-      return 'border-rose-500 bg-rose-950/10 shadow-[0_0_20px_rgba(244,63,94,0.1)]'
-    case 'default':
-    default:
-      return 'border-gray-800 bg-gray-900/40 hover:border-gray-700 hover:bg-gray-900/60 hover:shadow-[0_0_15px_rgba(255,255,255,0.02)]'
-  }
-}
+export type { UploadState }
+export { getUploadZoneStyles }
 
 export default function CvUploadZone({ onSuccess }: CvUploadZoneProps) {
   const { getToken } = useAuth()
@@ -148,21 +126,31 @@ export default function CvUploadZone({ onSuccess }: CvUploadZoneProps) {
       />
 
       <div
+        role="button"
+        tabIndex={state === 'uploading' ? -1 : 0}
+        aria-label="Upload CV PDF file. Drag and drop file or press Enter to browse."
+        aria-live="polite"
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={state === 'default' || state === 'error' ? triggerBrowse : undefined}
-        className={`relative overflow-hidden cursor-pointer rounded-2xl border-2 border-dashed p-10 text-center transition-all duration-300 ease-out backdrop-blur-md ${getUploadZoneStyles(
+        onKeyDown={(e) => {
+          if ((e.key === 'Enter' || e.key === ' ') && (state === 'default' || state === 'error')) {
+            e.preventDefault()
+            triggerBrowse()
+          }
+        }}
+        className={`relative overflow-hidden cursor-pointer rounded-2xl border-2 border-dashed p-10 text-center transition-all duration-300 ease-out backdrop-blur-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b8796a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d2f3e] ${getUploadZoneStyles(
           state
         )}`}
       >
-        {/* Glow ambient background effect */}
-        <div className="absolute -inset-10 bg-gradient-to-r from-violet-600/10 to-indigo-600/10 opacity-30 blur-2xl pointer-events-none" />
+        {/* Subtle background overlay */}
+        <div className="absolute -inset-10 bg-[#b8796a]/5 opacity-20 pointer-events-none" />
 
         {/* DEFAULT STATE */}
         {state === 'default' && (
           <div className="flex flex-col items-center justify-center space-y-4 py-4">
-            <div className="p-4 bg-gray-800/50 rounded-full text-violet-400 group-hover:scale-110 transition-transform duration-300">
+            <div className="p-4 bg-[#575068]/80 border border-[#3d3a52] rounded-full text-[#d9998a] group-hover:scale-105 transition-transform duration-300">
               <svg
                 className="w-8 h-8"
                 fill="none"
@@ -179,10 +167,10 @@ export default function CvUploadZone({ onSuccess }: CvUploadZoneProps) {
               </svg>
             </div>
             <div>
-              <p className="text-lg font-medium text-gray-200">
+              <p className="text-lg font-medium text-[#f5ede9]">
                 Drag and drop your CV PDF here
               </p>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-[#a09098] mt-1">
                 PDF only (Max 5MB)
               </p>
             </div>
@@ -192,7 +180,7 @@ export default function CvUploadZone({ onSuccess }: CvUploadZoneProps) {
                 e.stopPropagation()
                 triggerBrowse()
               }}
-              className="px-5 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white rounded-lg font-medium shadow-md transition-all duration-200"
+              className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 bg-[#b8796a] hover:bg-[#d9998a] text-[#f5ede9] rounded-lg font-medium shadow-sm transition-colors duration-200"
             >
               Browse Files
             </button>
@@ -202,7 +190,7 @@ export default function CvUploadZone({ onSuccess }: CvUploadZoneProps) {
         {/* DRAGGING STATE */}
         {state === 'dragging' && (
           <div className="flex flex-col items-center justify-center space-y-4 py-4 pointer-events-none">
-            <div className="p-4 bg-violet-500/20 rounded-full text-violet-400 animate-bounce">
+            <div className="p-4 bg-[#b8796a]/20 rounded-full text-[#d9998a]">
               <svg
                 className="w-8 h-8"
                 fill="none"
@@ -219,10 +207,10 @@ export default function CvUploadZone({ onSuccess }: CvUploadZoneProps) {
               </svg>
             </div>
             <div>
-              <p className="text-lg font-semibold text-violet-300">
+              <p className="text-lg font-semibold text-[#d9998a]">
                 Drop your PDF file now
               </p>
-              <p className="text-sm text-violet-400/70 mt-1">
+              <p className="text-sm text-[#d9998a]/80 mt-1">
                 Release to start extraction
               </p>
             </div>
@@ -234,21 +222,21 @@ export default function CvUploadZone({ onSuccess }: CvUploadZoneProps) {
           <div className="flex flex-col items-center justify-center space-y-5 py-4">
             <div className="relative w-16 h-16">
               {/* Outer pulsing ring */}
-              <div className="absolute inset-0 rounded-full border-4 border-violet-500/30 animate-ping" />
+              <div className="absolute inset-0 rounded-full border-4 border-[#b8796a]/20 animate-pulse motion-reduce:animate-none" />
               {/* Spinning loader */}
-              <div className="w-16 h-16 rounded-full border-4 border-violet-500 border-t-transparent animate-spin" />
+              <div className="w-16 h-16 rounded-full border-4 border-[#b8796a] border-t-transparent animate-spin motion-reduce:animate-none" />
             </div>
             <div>
-              <p className="text-lg font-medium text-gray-200">
+              <p className="text-lg font-medium text-[#f5ede9]">
                 Extracting text...
               </p>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-[#a09098] mt-1">
                 Reading CV structure and filtering content
               </p>
             </div>
-            {/* Styled pseudo-progress bar */}
-            <div className="w-48 h-1.5 bg-gray-800 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full animate-[shimmer_1.5s_infinite] w-2/3" />
+            {/* Styled progress bar */}
+            <div className="w-48 h-1.5 bg-[#3d3a52] rounded-full overflow-hidden">
+              <div className="h-full bg-[#b8796a] rounded-full w-2/3 transition-all duration-300 motion-reduce:transition-none" />
             </div>
           </div>
         )}
@@ -276,10 +264,10 @@ export default function CvUploadZone({ onSuccess }: CvUploadZoneProps) {
               <p className="text-lg font-semibold text-emerald-400">
                 Extraction Successful!
               </p>
-              <p className="text-sm text-gray-200 mt-2 font-medium max-w-md mx-auto truncate">
+              <p className="text-sm text-[#f5ede9] mt-2 font-medium max-w-md mx-auto truncate">
                 {fileName}
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-[#a09098] mt-1">
                 {wordCount} words extracted
               </p>
             </div>
@@ -289,7 +277,7 @@ export default function CvUploadZone({ onSuccess }: CvUploadZoneProps) {
                 e.stopPropagation()
                 resetUpload()
               }}
-              className="px-4 py-1.5 border border-gray-800 hover:border-gray-700 bg-gray-900 text-gray-400 hover:text-gray-300 rounded-lg text-sm transition-all"
+              className="inline-flex items-center justify-center min-h-[44px] px-4 py-2 border border-[#3d3a52] hover:border-[#575068] bg-[#575068]/60 text-[#f5ede9] hover:text-white rounded-lg text-sm transition-all"
             >
               Try another file
             </button>

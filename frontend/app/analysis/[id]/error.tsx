@@ -8,14 +8,14 @@ export default function Error({
   reset: () => void
 }) {
   return (
-    <main className="min-h-screen bg-gray-950 p-6 text-white md:p-8">
+    <main className="min-h-screen bg-[#0d2f3e] p-6 text-[#f5ede9] md:p-8">
       <div className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center justify-center gap-5 text-center">
-        <h1 className="text-2xl font-bold">Something went wrong</h1>
-        <p className="text-sm text-gray-500">{error.message}</p>
+        <h1 className="text-2xl font-bold font-display">Something went wrong</h1>
+        <p className="text-sm text-[#a09098]">{error.message}</p>
         <button
           type="button"
           onClick={reset}
-          className="rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-500"
+          className="rounded-xl bg-[#b8796a] hover:bg-[#d9998a] px-5 py-3 text-sm font-semibold text-[#f5ede9] transition shadow-md shadow-[#b8796a]/25"
         >
           Try again
         </button>

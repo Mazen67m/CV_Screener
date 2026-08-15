@@ -26,11 +26,21 @@ export async function getMe(token: string): Promise<UserProfile> {
 
 export async function setRole(
   role: 'job_seeker' | 'recruiter',
-  token: string
+  token: string,
+  profile?: {
+    targetRole?: string
+    experienceLevel?: string
+    yearsOfExperience?: string
+    preferredIndustries?: string
+    companyName?: string
+    industry?: string
+    companySize?: string
+    hiringRoles?: string
+  }
 ): Promise<UserProfile> {
   const res = await api.post(
     '/auth/role',
-    { role },
+    { role, ...profile },
     { headers: { Authorization: `Bearer ${token}` } }
   )
   return res.data
@@ -52,12 +62,14 @@ export interface ExperienceBreakdown {
   cvYears: number
   requiredYears: number
   score: number
+  mismatchNote?: string
 }
 
 export interface AnalyzeResponse {
   id: string
   jobTitle: string | null
   overallScore: number
+  scoreLabel: string
   textSimilarity: number
   skillsScore: number
   experienceScore: number
@@ -76,6 +88,7 @@ export interface HistoryItem {
   id: string
   jobTitle: string | null
   overallScore: number
+  scoreLabel: string
   matchedSkillsCount: number
   missingSkillsCount: number
   createdAt: string
@@ -110,5 +123,29 @@ export async function getAnalysis(
 
 export async function getSharedAnalysis(id: string): Promise<AnalyzeResponse> {
   const res = await api.get<AnalyzeResponse>(`/share/${id}`)
+  return res.data
+}
+
+export interface DashboardMetrics {
+  totalAnalyses: number
+  averageScore: number | null
+  bestScore: number | null
+  mostMissingSkills: string[]
+}
+
+export async function getDashboardMetrics(token: string): Promise<DashboardMetrics> {
+  const res = await api.get<DashboardMetrics>('/dashboard/metrics', {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  return res.data
+}
+
+export async function getLearningPath(
+  analysisId: string,
+  token: string
+): Promise<{ skills: string[] }> {
+  const res = await api.get<{ skills: string[] }>(`/analysis/${analysisId}/learning-path`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
   return res.data
 }

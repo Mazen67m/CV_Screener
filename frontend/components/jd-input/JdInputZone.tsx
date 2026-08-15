@@ -106,7 +106,7 @@ export default function JdInputZone({ onValid }: JdInputZoneProps) {
 
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col space-y-2">
-      <label htmlFor="jd-textarea" className="text-sm font-semibold text-gray-300">
+      <label htmlFor="jd-textarea" className="text-sm font-semibold text-[#f5ede9]">
         Job Description
       </label>
       <div
@@ -114,19 +114,20 @@ export default function JdInputZone({ onValid }: JdInputZoneProps) {
           state
         )}`}
       >
-        {/* Glow ambient background effect */}
-        <div className="absolute -inset-10 bg-gradient-to-r from-violet-600/5 to-indigo-600/5 opacity-30 blur-2xl pointer-events-none" />
+        {/* Ambient background overlay */}
+        <div className="absolute -inset-10 bg-[#b8796a]/5 opacity-20 pointer-events-none" />
 
         <textarea
           id="jd-textarea"
+          aria-describedby="jd-status-msg"
           value={text}
           onChange={handleChange}
           placeholder={`Paste the Job Description here (Minimum ${JD_MIN_WORDS} words)...`}
-          className="w-full min-h-[200px] bg-transparent text-gray-200 placeholder-gray-500 focus:outline-none resize-y text-base font-normal leading-relaxed"
+          className="w-full min-h-[200px] bg-transparent text-[#f5ede9] placeholder-[#a09098]/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#b8796a] rounded-lg p-2 resize-y text-base font-normal leading-relaxed"
         />
 
-        <div className="flex items-center justify-between mt-4 border-t border-gray-800/60 pt-3">
-          <div className="text-xs text-gray-500">
+        <div className="flex items-center justify-between mt-4 border-t border-[#3d3a52]/60 pt-3">
+          <div id="jd-status-msg" aria-live="polite" className="text-xs text-[#a09098]">
             {/* API error takes precedence over all other status messages */}
             {apiError && (
               <span className="text-rose-400 font-medium">{apiError}</span>
@@ -142,7 +143,7 @@ export default function JdInputZone({ onValid }: JdInputZoneProps) {
               </span>
             )}
             {!apiError && state === 'valid' && isValidating && (
-              <span className="text-violet-400 font-medium animate-pulse">
+              <span className="text-[#d9998a] font-medium animate-pulse">
                 Validating…
               </span>
             )}
@@ -155,18 +156,18 @@ export default function JdInputZone({ onValid }: JdInputZoneProps) {
               <span>Provide a detailed description of the job profile.</span>
             )}
           </div>
-          <div className="text-sm font-semibold text-gray-400">
+          <div className="text-sm font-semibold text-[#a09098]">
             <span
               className={
                 state === 'too_short' ? 'text-amber-400'  :
                 state === 'too_long'  ? 'text-rose-400'   :
                 state === 'valid'     ? 'text-emerald-400' :
-                'text-gray-400'
+                'text-[#a09098]'
               }
             >
               {wordCount}
             </span>
-            <span className="text-gray-600"> / {JD_MAX_WORDS} words</span>
+            <span className="text-[#a09098]/60"> / {JD_MAX_WORDS} words</span>
           </div>
         </div>
       </div>

@@ -25,6 +25,10 @@ export async function resolve(specifier, context, nextResolve) {
     if (existsSync(candidate)) {
       return nextResolve(pathToFileURL(candidate).href, context)
     }
+    const candidateTsx = pathResolve(parentDir, specifier + '.tsx')
+    if (existsSync(candidateTsx)) {
+      return nextResolve(pathToFileURL(candidateTsx).href, context)
+    }
   }
 
   return nextResolve(specifier, context)

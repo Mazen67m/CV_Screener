@@ -90,8 +90,8 @@ describe('truncateToWordLimit', () => {
 describe('getJdZoneStyles', () => {
   it('should return default styles for default state', () => {
     const styles = getJdZoneStyles('default')
-    assert.ok(styles.includes('border-gray-800'))
-    assert.ok(styles.includes('bg-gray-900/40'))
+    assert.ok(styles.includes('border-[#3d3a52]'))
+    assert.ok(styles.includes('bg-[#575068]/40'))
   })
 
   it('should return typing styles for typing state', () => {

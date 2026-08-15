@@ -19,6 +19,6 @@ export function getJdZoneStyles(state: JdState): string {
       return 'border-rose-500 bg-rose-950/10 shadow-[0_0_20px_rgba(244,63,94,0.1)] focus-within:border-rose-400'
     case 'default':
     default:
-      return 'border-gray-800 bg-gray-900/40 hover:border-gray-700 focus-within:border-violet-500/80 focus-within:bg-gray-900/60'
+      return 'border-[#3d3a52] bg-[#575068]/40 hover:border-[#575068] focus-within:border-[#b8796a]/80 focus-within:bg-[#575068]/60'
   }
 }
