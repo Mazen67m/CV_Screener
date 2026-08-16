@@ -11,10 +11,6 @@ export default clerkMiddleware(async (auth, request) => {
   if (!isPublicRoute(request)) {
     await auth.protect()
   }
-}, {
-  frontendApiProxy: {
-    enabled: true,
-  },
 })
 
 export const config = {
