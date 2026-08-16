@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { SignedIn, SignedOut, SignInButton } from '@clerk/nextjs'
+import { Show, SignInButton } from '@clerk/nextjs'
 
 export default function LandingNav() {
   const [scrolled, setScrolled] = useState(false)
@@ -43,7 +43,7 @@ export default function LandingNav() {
             How it works
           </Link>
 
-          <SignedOut>
+          <Show when="signed-out">
             <SignInButton mode="modal">
               <button className="text-sm font-semibold text-[#f5ede9] hover:text-white px-4 py-2 rounded-lg border border-[#3d3a52] hover:border-[#575068] bg-[#575068]/60 hover:bg-[#575068]/80 transition-all">
                 Sign in
@@ -54,16 +54,16 @@ export default function LandingNav() {
                 Analyze your CV →
               </button>
             </SignInButton>
-          </SignedOut>
+          </Show>
 
-          <SignedIn>
+          <Show when="signed-in">
             <Link
               href="/dashboard"
               className="text-sm font-semibold text-[#f5ede9] px-4 py-2 rounded-lg bg-[#b8796a] hover:bg-[#d9998a] transition-all shadow-sm shadow-[#b8796a]/30"
             >
               Dashboard →
             </Link>
-          </SignedIn>
+          </Show>
         </div>
 
         {/* Mobile Hamburger */}
@@ -96,7 +96,7 @@ export default function LandingNav() {
             How it works
           </Link>
           <div className="pt-2 border-t border-[#3d3a52]/80 flex flex-col space-y-3">
-            <SignedOut>
+            <Show when="signed-out">
               <SignInButton mode="modal">
                 <button
                   onClick={() => setMobileOpen(false)}
@@ -113,8 +113,8 @@ export default function LandingNav() {
                   Analyze your CV →
                 </button>
               </SignInButton>
-            </SignedOut>
-            <SignedIn>
+            </Show>
+            <Show when="signed-in">
               <Link
                 href="/dashboard"
                 onClick={() => setMobileOpen(false)}
@@ -122,7 +122,7 @@ export default function LandingNav() {
               >
                 Go to Dashboard →
               </Link>
-            </SignedIn>
+            </Show>
           </div>
         </div>
       )}

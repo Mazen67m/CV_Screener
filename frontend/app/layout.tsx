@@ -49,9 +49,9 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <ClerkProvider>
-      <html lang="en" className={`dark ${geist.variable} ${clashDisplay.variable}`}>
-        <body className="min-h-screen bg-[#0d2f3e] font-sans text-[#f5ede9] antialiased selection:bg-[#b8796a]/40 selection:text-white">
+    <html lang="en" className={`dark ${geist.variable} ${clashDisplay.variable}`}>
+      <body className="min-h-screen bg-[#0d2f3e] font-sans text-[#f5ede9] antialiased selection:bg-[#b8796a]/40 selection:text-white">
+        <ClerkProvider>
           {/*
             THESIS: The match score flows and deposits like molten glaze; gravity-as-verdict replaces generic SaaS metric dials.
             OWN-WORLD: Deep navy-teal canvas #0d2f3e, 1px tonal borders #3d3a52, translucent slate-purple surfaces #575068/40, Clash Display display typography, emerald/amber/rose semantic status chips.
@@ -61,8 +61,8 @@ export default function RootLayout({
             FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
           */}
           {children}
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   )
 }

@@ -11,20 +11,20 @@
     "test": "node --loader ./ts-loader.mjs --experimental-strip-types --test 'components/**/*.test.ts' 'lib/**/*.test.ts'"
   },
   "dependencies": {
-    "react": "^19",
-    "react-dom": "^19",
+    "@clerk/nextjs": "^7.7.6",
+    "axios": "^1.7.2",
     "next": "^15.3.3",
-    "@clerk/nextjs": "^6.21.0",
-    "axios": "^1.7.2"
+    "react": "^19",
+    "react-dom": "^19"
   },
   "devDependencies": {
-    "typescript": "^5",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "^15.3.3",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "eslint": "^9",
-    "eslint-config-next": "^15.3.3"
+    "typescript": "^5"
   }
 }

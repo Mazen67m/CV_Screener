@@ -1,6 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
-import { SignedIn, SignedOut, SignInButton } from '@clerk/nextjs'
+import { Show, SignInButton } from '@clerk/nextjs'
 import LandingNav from '@/components/landing/LandingNav'
 import GlazedScoreDemo from '@/components/landing/GlazedScoreDemo'
 import LandingProcession from '@/components/landing/LandingProcession'
@@ -30,7 +30,7 @@ export default function LandingPage() {
 
             {/* Primary Action Button */}
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
-              <SignedOut>
+              <Show when="signed-out">
                 <SignInButton mode="modal">
                   <button className="w-full sm:w-auto px-8 py-4 bg-[#b8796a] hover:bg-[#d9998a] text-[#f5ede9] font-semibold rounded-xl text-base shadow-lg shadow-[#b8796a]/25 hover:shadow-[#b8796a]/40 transition-all duration-200 flex items-center justify-center space-x-2">
                     <span>Analyze your CV</span>
@@ -39,9 +39,9 @@ export default function LandingPage() {
                     </svg>
                   </button>
                 </SignInButton>
-              </SignedOut>
+              </Show>
 
-              <SignedIn>
+              <Show when="signed-in">
                 <Link
                   href="/analysis/new"
                   className="w-full sm:w-auto px-8 py-4 bg-[#b8796a] hover:bg-[#d9998a] text-[#f5ede9] font-semibold rounded-xl text-base shadow-lg shadow-[#b8796a]/25 hover:shadow-[#b8796a]/40 transition-all duration-200 flex items-center justify-center space-x-2"
@@ -51,7 +51,7 @@ export default function LandingPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                   </svg>
                 </Link>
-              </SignedIn>
+              </Show>
 
               <Link
                 href="#how-it-works"
