@@ -5,6 +5,8 @@ using Microsoft.ML.OnnxRuntime.Tensors;
 using CVScreener.Core.Interfaces;
 using CVScreener.Core.Models;
 
+using CVScreener.Infrastructure.Helpers;
+
 namespace CVScreener.Infrastructure.Services;
 
 /// <summary>
@@ -104,9 +106,7 @@ public sealed class OnnxInferenceService : IOnnxInferenceService, IDisposable
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private static string ResolvePath(string path)
-        => Path.IsPathRooted(path)
-            ? path
-            : Path.GetFullPath(path, Directory.GetCurrentDirectory());
+        => PathResolver.Resolve(path);
 
     private static void ValidateFile(string path, string settingKey)
     {

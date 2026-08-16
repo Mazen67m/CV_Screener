@@ -197,7 +197,27 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseExceptionHandler(_ => { });
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        var exceptionHandlerPathFeature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerPathFeature>();
+        var ex = exceptionHandlerPathFeature?.Error;
+        if (ex != null)
+        {
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogError(ex, "Unhandled exception occurred on path {Path}: {Message}", exceptionHandlerPathFeature?.Path, ex.Message);
+        }
+
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new
+        {
+            error = "An internal server error occurred.",
+            message = ex?.Message
+        });
+    });
+});
 
 app.UseCors("FrontendPolicy");
 

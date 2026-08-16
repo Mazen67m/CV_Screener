@@ -1,6 +1,7 @@
 using System.Text.Json;
 using CVScreener.Core.Interfaces;
 using CVScreener.Core.Models;
+using CVScreener.Infrastructure.Helpers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -119,9 +120,7 @@ public sealed class TfIdfService : IOnnxInferenceService, ITfIdfService
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private static string ResolvePath(string path)
-        => Path.IsPathRooted(path)
-            ? path
-            : Path.GetFullPath(path, Directory.GetCurrentDirectory());
+        => PathResolver.Resolve(path);
 
     private static void ValidateFile(string path, string settingName)
     {

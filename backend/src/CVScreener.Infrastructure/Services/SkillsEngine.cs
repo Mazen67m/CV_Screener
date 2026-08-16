@@ -1,6 +1,7 @@
 using System.Text.Json;
 using CVScreener.Core.Interfaces;
 using CVScreener.Core.Models;
+using CVScreener.Infrastructure.Helpers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -107,7 +108,5 @@ public sealed class SkillsEngine : ISkillsEngine
         => source.Contains(term, StringComparison.OrdinalIgnoreCase);
 
     private static string ResolvePath(string path)
-        => Path.IsPathRooted(path)
-            ? path
-            : Path.GetFullPath(path, Directory.GetCurrentDirectory());
+        => PathResolver.Resolve(path);
 }

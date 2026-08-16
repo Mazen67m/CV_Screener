@@ -21,4 +21,5 @@ RUN dotnet publish "CVScreener.API.csproj" -c Release -o /app/publish /p:UseAppH
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+COPY ml/ /app/ml/
 ENTRYPOINT ["dotnet", "CVScreener.API.dll"]
